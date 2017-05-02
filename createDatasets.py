@@ -3,7 +3,6 @@ import shutil
 
 import numpy as np 
 import pandas as pd 
-import matplotlib.pyplot as plt 
 
 import skimage.io
 from skimage import transform as tf 

@@ -5,8 +5,6 @@ import numpy as np
 import pandas as pd
 np.random.seed(148)
 
-import matplotlib.pyplot as plt
-
 import keras
 from keras.models import Sequential, Model
 from keras.layers.convolutional import Conv2D, ZeroPadding2D
@@ -182,12 +180,10 @@ def F(y_true, y_pred):
 # Combined model w/ classifier
 model = Model(inputs=base_model.input, outputs=loc_concat)
 
-
 model.summary()
-model.compile(optimizer=SGD(), loss=F, metrics=[F])
-# print(model.predict(x_test, batch_size=batch_size, verbose=1))
+model.compile(optimizer=SGD(), loss=F)
 
 history1 = fitData(tensorflow, batch_size, epochs1, model, train_generator, validation_generator, train_size, test_size)
-# model.save_weights('inception_top.h5')
+model.save_weights('inception_top.h5')
 
 

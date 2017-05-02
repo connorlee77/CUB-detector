@@ -3,7 +3,6 @@ import shutil
 
 import numpy as np 
 import pandas as pd 
-import matplotlib.pyplot as plt 
 import skimage.io
 
 DIR = './'
@@ -112,4 +111,5 @@ def boundingbox():
 	normalizeBoundingBox(train_CSV, 'train_multibox.csv', TRAIN_DIR)
 	normalizeBoundingBox(test_CSV, 'test_multibox.csv', TEST_DIR)
 
+toCSV()
 boundingbox()
