@@ -14,7 +14,7 @@ from keras.preprocessing.image import ImageDataGenerator
 
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
 from keras import backend as K
-from keras.optimizers import SGD, RMSprop
+from keras.optimizers import SGD, RMSprop, Adagrad
 
 from priors import getPriors
 
@@ -154,10 +154,11 @@ c_c_out_conf = Reshape((1, 2*2*11))(c_br1c_conf)
 loc_concat = concatenate([a_out_loc, b_out_loc, c_a_out_loc, c_b_out_loc, c_c_out_loc], name='loc')
 conf_concat = concatenate([a_out_conf, b_out_conf, c_a_out_conf, c_b_out_conf, c_c_out_conf], name='conf')
 
-alpha = 1.0
+alpha = 0.3
 def F(y_true, y_pred):
-    predicted_positions = y_pred + priors     
-    F_conf = -K.log(conf_concat)    
+    predicted_positions = y_pred + priors   
+    conf = K.clip(conf_concat, 0.005, 0.995)  
+    F_conf = -K.log(conf) + K.log(1 - conf) - K.sum(K.log(1-conf)) 
     F_loc = K.sqrt(K.sum(K.square(predicted_positions - y_true), axis=1, keepdims=True)) / 2.0    
     F_loss = F_conf + alpha * F_loc    
     F_min = K.min(F_loss)
@@ -172,8 +173,7 @@ for i, layer in enumerate(base_model.layers):
     layer.trainable = False
 
 model.summary()
-model.compile(optimizer=SGD(lr=0.01, decay=0.99), loss=F)
-model.load_weights('inception_top.h5')
+model.compile(optimizer=Adagrad(), loss=F)
 history1 = fitData(tensorflow, batch_size, epochs1, model, train_generator, validation_generator, train_size, test_size)
 model.save_weights('inception_top.h5')
 
