@@ -1,0 +1,13 @@
+attributes/
+images/
+parts/
+bounding_boxes.txt
+classes.txt
+image_class_labels.txt
+images.txt
+README
+train_test_split.txt
+*.jpg
+*.npy
+*.h5
+__pycache__/
