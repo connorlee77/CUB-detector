@@ -155,24 +155,11 @@ conf_concat = concatenate([a_out_conf, b_out_conf, c_a_out_conf, c_b_out_conf, c
 
 alpha = 0.7
 def F(y_true, y_pred):
-    print('priors: ' + str(priors.get_shape()))
-    print('y_true: ' + str(y_true.get_shape()))
-    print('y_pred: ' + str(y_pred.get_shape()))
-    
-    predicted_positions = y_pred + priors 
-    print('predicted_positions: ' + str(predicted_positions.get_shape()))
-    
-    F_conf = -K.log(conf_concat)
-    print('F_conf: ' + str(F_conf.get_shape()))
-    
-    F_loc = K.sqrt(K.sum(K.square(predicted_positions - y_true), axis=1, keepdims=True)) / 2.0
-    print('F_loc: ' + str(F_loc.get_shape()))
-    
-    F_loss = F_conf + alpha * F_loc
-    print('F_loss: ' + str(F_loss.get_shape()))
-    
+    predicted_positions = y_pred + priors     
+    F_conf = -K.log(conf_concat)    
+    F_loc = K.sqrt(K.sum(K.square(predicted_positions - y_true), axis=1, keepdims=True)) / 2.0    
+    F_loss = F_conf + alpha * F_loc    
     F_min = K.min(F_loss)
-    print('F_min: ' + str(F_min.get_shape()))
     
     return F_min
 

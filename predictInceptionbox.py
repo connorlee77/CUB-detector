@@ -49,7 +49,6 @@ img_width, img_height = 299, 299
 batch_size = 32
 test_size = len(x_test)
 
-
 base_model = InceptionV3(weights='imagenet', input_shape=(img_width, img_height, 3), pooling=None, include_top=False)
 
 # Top classifier
