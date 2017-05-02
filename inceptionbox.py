@@ -89,6 +89,7 @@ base_model = InceptionV3(weights='imagenet', input_shape=(img_width, img_height,
 x = base_model.output
 ### Global Avg Pooling 
 
+
 ### Branch A
 a_br1 = ZeroPadding2D(padding=0)(x)
 a_br1 = Conv2D(filters=96, kernel_size=1, strides=1, activation='relu')(a_br1)
@@ -153,7 +154,7 @@ c_c_out_conf = Reshape((1, 2*2*11))(c_br1c_conf)
 loc_concat = concatenate([a_out_loc, b_out_loc, c_a_out_loc, c_b_out_loc, c_c_out_loc], name='loc')
 conf_concat = concatenate([a_out_conf, b_out_conf, c_a_out_conf, c_b_out_conf, c_c_out_conf], name='conf')
 
-alpha = 0.7
+alpha = 1.0
 def F(y_true, y_pred):
     predicted_positions = y_pred + priors     
     F_conf = -K.log(conf_concat)    
@@ -176,10 +177,3 @@ model.load_weights('inception_top.h5')
 history1 = fitData(tensorflow, batch_size, epochs1, model, train_generator, validation_generator, train_size, test_size)
 model.save_weights('inception_top.h5')
 
-for layer in model.layers[:172]:
-   layer.trainable = False
-for layer in model.layers[172:]:
-   layer.trainable = True
-
-history2 = fitData(tensorflow, batch_size, epochs2, model, train_generator, validation_generator, train_size, test_size)
-model.save_weights('inception_bottleneck.h5')
