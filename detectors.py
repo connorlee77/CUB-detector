@@ -62,7 +62,7 @@ for i, row in data.iterrows():
 
 	# directories = os.path.dirname(path)
 	# src = TEST_DIR + path
-	print prior*299
+
 	prior = map(int, prior*299)
 	
 	pic = test_data[i]
