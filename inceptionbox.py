@@ -5,10 +5,12 @@ import numpy as np
 import pandas as pd
 np.random.seed(148)
 
+import tensorflow as tf
 import keras
 from keras.models import Sequential, Model
 from keras.layers.convolutional import Conv2D, ZeroPadding2D
 from keras.layers.merge import concatenate
+from keras.layers.pooling import AveragePooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense, Reshape, Lambda
 from keras.preprocessing.image import ImageDataGenerator
 
@@ -18,11 +20,11 @@ from keras.optimizers import SGD, RMSprop, Adagrad
 
 from priors import getPriors
 
-
+shp = 1
 def fixLabels(test):
-    a = np.zeros((len(test), 4, 1419))
+    a = np.zeros((len(test), 4, shp))
     for i, row in enumerate(test):
-        a[i] = np.repeat(np.array([row]).T, 1419, axis=1)
+        a[i] = np.repeat(np.array([row]).T, shp, axis=1)
     return a
 
 # File paths
@@ -46,8 +48,6 @@ x_test = preprocess_input(x_test)
 train_datagen = ImageDataGenerator()
 test_datagen = ImageDataGenerator()
 
-train_generator = train_datagen.flow(x_train, y_train, batch_size=32)
-validation_generator = test_datagen.flow(x_test, y_test, batch_size=32)
 
 priors = getPriors()
 priors = K.variable(priors)
@@ -55,11 +55,14 @@ priors = K.variable(priors)
 ### Parameters
 img_width, img_height = 299, 299 
 batch_size = 32
-epochs1 = 5
+epochs1 = 20
 epochs2 = 5
 tensorflow = True
 train_size = len(x_train)
 test_size = len(x_test) / 2
+
+train_generator = train_datagen.flow(x_train, y_train, batch_size=batch_size)
+validation_generator = test_datagen.flow(x_test, y_test, batch_size=batch_size)
 
 
 def fitData(tensorflow, batch_size, epochs, model, generator_train, generator_test, train_size, test_size):
@@ -88,7 +91,12 @@ base_model = InceptionV3(weights='imagenet', input_shape=(img_width, img_height,
 # Top classifier
 x = base_model.output
 ### Global Avg Pooling 
+big1 = AveragePooling2D(pool_size=(8, 8))(x)
+big1loc = Conv2D(filters=4, kernel_size=1, strides=1)(big1)
+big1conf = Conv2D(filters=1, kernel_size=1, strides=1, activation='sigmoid')(big1)
 
+big1loc_out = Reshape((4, 1))(big1loc)
+big1conf_out = Reshape((1, 1))(big1conf)
 
 ### Branch A
 a_br1 = ZeroPadding2D(padding=0)(x)
@@ -151,15 +159,17 @@ c_b_out_conf = Reshape((1, 3*3*11))(c_br1b_conf)
 c_c_out_loc = Reshape((4, 2*2*11))(c_br1c_loc)
 c_c_out_conf = Reshape((1, 2*2*11))(c_br1c_conf)
 
-loc_concat = concatenate([a_out_loc, b_out_loc, c_a_out_loc, c_b_out_loc, c_c_out_loc], name='loc')
-conf_concat = concatenate([a_out_conf, b_out_conf, c_a_out_conf, c_b_out_conf, c_c_out_conf], name='conf')
+# loc_concat = concatenate([a_out_loc, b_out_loc, c_a_out_loc, c_b_out_loc, c_c_out_loc, big1loc_out], name='loc')
+# conf_concat = concatenate([a_out_conf, b_out_conf, c_a_out_conf, c_b_out_conf, c_c_out_conf, big1conf_out], name='conf')
 
-alpha = 0.3
+loc_concat = big1loc_out
+conf_concat = big1conf_out
+alpha = 1000.0
 def F(y_true, y_pred):
     predicted_positions = y_pred + priors   
     conf = K.clip(conf_concat, 0.005, 0.995)  
     F_conf = -K.log(conf) + K.log(1 - conf) - K.sum(K.log(1-conf)) 
-    F_loc = K.sqrt(K.sum(K.square(predicted_positions - y_true), axis=1, keepdims=True)) / 2.0    
+    F_loc = K.sum(K.square(predicted_positions - y_true), axis=1, keepdims=True)  
     F_loss = F_conf + alpha * F_loc    
     F_min = K.min(F_loss)
     
@@ -168,12 +178,22 @@ def F(y_true, y_pred):
 
 # Combined model w/ classifier
 model = Model(inputs=base_model.input, outputs=loc_concat)
+model.summary()
+
 
 for i, layer in enumerate(base_model.layers):
     layer.trainable = False
 
-model.summary()
-model.compile(optimizer=Adagrad(), loss=F)
-history1 = fitData(tensorflow, batch_size, epochs1, model, train_generator, validation_generator, train_size, test_size)
+model.compile(optimizer=RMSprop(lr=0.01, epsilon=1.0, decay=0.9), loss=F)
+history = fitData(tensorflow, batch_size, epochs1, model, train_generator, validation_generator, train_size, test_size)
 model.save_weights('inception_top.h5')
 
+
+for layer in model.layers[:172]:
+   layer.trainable = False
+for layer in model.layers[172:]:
+   layer.trainable = True
+
+model.compile(optimizer=RMSprop(lr=0.0001, epsilon=1.0, decay=0.9), loss=F)
+history = fitData(tensorflow, batch_size, epochs2, model, train_generator, validation_generator, train_size, test_size)
+model.save_weights('inception_bottleneck.h5')

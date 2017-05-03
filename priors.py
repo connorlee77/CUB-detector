@@ -48,6 +48,7 @@ def getPriors():
 		# cv2.waitKey(0)
 		# cv2.destroyAllWindows()
 	return np.array([[0.1, 0.9, 0.1, 0.9]]).T 
+
 	#return np.concatenate((priors[8], priors[6], priors[4], priors[3], priors[2], np.array([[0.1, 0.9, 0.1, 0.9]]).T), axis=1)
 	
 
