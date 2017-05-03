@@ -221,11 +221,9 @@ def crop(DATA_DIR, DST_DIR, locations, confidence, DATA_CSV):
 	loc = np.load(locations)
 	conf = np.load(confidence)
 	priors = getPriors()
-
 	data = pd.read_csv(DATA_CSV)
-
 	for i, row in data.iterrows():
-		if i == 5792:
+		if i == len(loc) - 1:
 			break
 		row_conf = conf[i]
 		agmax, cmax = np.argmax(row_conf), np.max(row_conf)
@@ -245,17 +243,17 @@ def crop(DATA_DIR, DST_DIR, locations, confidence, DATA_CSV):
 		src = DATA_DIR + path
 		dst = DST_DIR + path
 
-		pic = cv2.imread(src)
-		cropped = pic[bbox_scaled[2]:bbox_scaled[3], bbox_scaled[0]:bbox_scaled[1]]
+# 		pic = cv2.imread(src)
+# 		cropped = pic[bbox_scaled[2]:bbox_scaled[3], bbox_scaled[0]:bbox_scaled[1]]
 		
-		if cropped.shape[0] == 0 or cropped.shape[1] == 0 or cropped.shape[2] == 0:
-			cropped = pic 
+# 		if cropped.shape[0] == 0 or cropped.shape[1] == 0 or cropped.shape[2] == 0:
+# 			cropped = pic 
 
-		try:
-			os.makedirs(DST_DIR + directories)
-			cv2.imwrite(dst, cropped)
-		except OSError:
-			cv2.imwrite(dst, cropped)
+		# try:
+		# 	os.makedirs(DST_DIR + directories)
+		# 	cv2.imwrite(dst, cropped)
+		# except OSError:
+		# 	cv2.imwrite(dst, cropped)
 
 crop('validation/', 'crop_v/', 'loc_test.npy', 'conf_test.npy', 'test_multibox.csv')
 crop('train/', 'crop_t/', 'loc_train.npy', 'conf_train.npy', 'train_multibox.csv')
