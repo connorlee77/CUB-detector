@@ -38,7 +38,7 @@ def getPriors():
 					rn2 = rn1 + dh 
 					cn2 = cn1 + dw 
 
-					curr[4*d:4*d+4] = np.array([rn1, rn2, cn1, cn2])
+					curr[4*d:4*d+4] = np.array([cn1, cn2, rn1, rn2])
 					# print curr[4*d:4*d+4]
 					# cv2.rectangle(chelsea, (int(rn1*299), int(cn1*299)), (int(rn2*299), int(cn2*299)), random_color())
 					d += 1
@@ -47,9 +47,8 @@ def getPriors():
 		# cv2.imshow('image',chelsea)
 		# cv2.waitKey(0)
 		# cv2.destroyAllWindows()
-
-	
-	return np.concatenate((priors[8], priors[6], priors[4], priors[3], priors[2]), axis=1)
+	return np.array([[0.1, 0.9, 0.1, 0.9]]).T
+	#return np.concatenate((priors[8], priors[6], priors[4], priors[3], priors[2], np.array([[0.1, 0.9, 0.1, 0.9]]).T), axis=1)
 	
 
 
